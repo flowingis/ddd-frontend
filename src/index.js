@@ -3,6 +3,11 @@ import ReactDOM from 'react-dom'
 import './index.css'
 import App from './App'
 import reportWebVitals from './reportWebVitals'
+import eventBus from './lib/services/eventBus'
+
+eventBus.subscribe(event => {
+  console.log('managing', event)
+})
 
 ReactDOM.render(
   <React.StrictMode>

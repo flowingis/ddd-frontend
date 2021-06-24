@@ -1,6 +1,7 @@
 import clone from 'lodash.clonedeep'
 import { set } from 'dot-prop-immutable'
 import deepFreeze from 'deep-freeze-strict'
+import { EVENT_TYPES } from '../services/eventBus'
 
 const freeze = aggregate => deepFreeze(clone(aggregate))
 
@@ -25,7 +26,7 @@ const createRankingValueObject = reviews => {
   })
 }
 
-const create = (employee, reviews) => {
+const create = (employee, reviews, eventBus) => {
   const ranking = createRankingValueObject(reviews)
   const aggregate = {
     employee,
@@ -46,6 +47,8 @@ const create = (employee, reviews) => {
       }
 
       const newAggregate = set(aggregate, 'employee.promoted', true)
+
+      eventBus.publish(EVENT_TYPES.EMPLOYEE_PROMOTED, newAggregate.employee)
 
       return {
         type: RESULT_TYPES.OK,
