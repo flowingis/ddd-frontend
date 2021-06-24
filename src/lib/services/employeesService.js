@@ -1,32 +1,30 @@
 import employeesRepository from '../api/employeesRepository'
 import reviewsRepository from '../api/reviewsRepository'
-
-const MIN_NUMBER_OF_REVIEWS_TO_BE_PROMOTED = 4
-const MIN_RANKING_TO_BE_PROMOTED = 7
+import employeeAggregateFactory from '../model/employeeAggregateFactory'
 
 const list = employeesRepository.list
 const promote = async (toPromote, employees, setEmployees) => {
   const reviews = await reviewsRepository.listReceivedReviews(toPromote.id)
+  const aggregate = employeeAggregateFactory
+    .create(toPromote, reviews)
+    .promote()
 
-  if (reviews.length < MIN_NUMBER_OF_REVIEWS_TO_BE_PROMOTED) {
-    throw new Error(`${toPromote.name} receveid only ${reviews.length} peer reviews, they cannot be promoted`)
-  }
+  const newEmployee = aggregate.employee
 
-  const averageRanking = reviews
-    .map(r => r.ranking)
-    .reduce((acc, ranking) => acc + ranking, 0) / reviews.length
-
-  if (averageRanking < MIN_RANKING_TO_BE_PROMOTED) {
-    throw new Error(`The ranking of ${toPromote.name} is too low (${averageRanking}) to be promoted`)
+  if (newEmployee.promoted === false) {
+    throw new Error(`${toPromote.name} cannot be promoted`)
   }
 
   const newEmployees = employees.map(employee => {
     if (employee.id === toPromote.id) {
-      employee.promoted = true
+      return newEmployee
     }
+
     return employee
   })
+
   setEmployees(newEmployees)
+
   employeesRepository
     .promote(toPromote.id)
     .catch(e => {
