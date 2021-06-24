@@ -35,7 +35,7 @@ function EmpoyeesList ({ employees, onPromoteClick }) {
           primary={employee.name}
         />
         <ListItemSecondaryAction>
-          <IconButton edge='end' aria-label='comments' onClick={() => onPromoteClick(employee.id)} disabled={employee.promoted}>
+          <IconButton edge='end' aria-label='comments' onClick={() => onPromoteClick(employee)} disabled={employee.promoted}>
             {icon}
           </IconButton>
         </ListItemSecondaryAction>
