@@ -4,6 +4,7 @@ import Typography from '@material-ui/core/Typography'
 import Box from '@material-ui/core/Box'
 import employeesService from './lib/services/employeesService'
 import EmpoyeesList from './components/EmpoyeesList'
+import { RESULT_TYPES } from './lib/model/employeeAggregateFactory'
 
 function AppContent ({ loading, employees, onPromoteClick }) {
   if (loading) {
@@ -27,12 +28,26 @@ export default function App () {
   }, [])
 
   const onPromoteClick = useCallback(async (toPromote) => {
-    try {
-      await employeesService.promote(toPromote, employees, setEmployees)
-    } catch (e) {
-      window.alert(e.message)
+    const result = await employeesService.promote(toPromote)
+
+    if (result.type === RESULT_TYPES.NOT_ENOUGH_REVIEWS) {
+      window.alert(`${toPromote.name} receveid only ${result.numberOfReviews} peer reviews, they cannot be promoted`)
+      return
     }
-  }, [employees])
+
+    if (result.type === RESULT_TYPES.RANKING_TOO_LOW) {
+      window.alert(`The ranking of ${toPromote.name} is too low (${result.averageRanking}) to be promoted`)
+      return
+    }
+
+    const { employee } = result
+    setEmployees(employees => employees.map(toCheck => {
+      if (toCheck.id === employee.id) {
+        return employee
+      }
+      return toCheck
+    }))
+  }, [])
 
   return (
     <Container maxWidth='sm'>
