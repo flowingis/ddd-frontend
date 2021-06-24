@@ -11,7 +11,7 @@ const create = () => {
     }
   }
 
-  const publish = (type, payload) => {
+  const publish = ({ type, payload }) => {
     if (!Object.values(EVENT_TYPES).includes(type)) {
       throw new Error('Invalid event')
     }

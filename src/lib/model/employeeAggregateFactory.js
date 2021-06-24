@@ -26,29 +26,42 @@ const createRankingValueObject = reviews => {
   })
 }
 
-const create = (employee, reviews, eventBus) => {
+const create = (employee, reviews) => {
   const ranking = createRankingValueObject(reviews)
+
+  let events = []
+
   const aggregate = {
     employee,
     ranking,
+    releaseEvents: () => {
+      const clonedEvents = freeze([...events])
+      events = []
+      return clonedEvents
+    },
     promote: () => {
       if (ranking.numberOfReviews < MIN_NUMBER_OF_REVIEWS_TO_BE_PROMOTED) {
         return {
           type: RESULT_TYPES.NOT_ENOUGH_REVIEWS,
-          numberOfReviews: ranking.numberOfReviews
+          numberOfReviews: ranking.numberOfReviews,
+          aggregate: freeze(clone(aggregate))
         }
       }
 
       if (ranking.averageRanking < MIN_RANKING_TO_BE_PROMOTED) {
         return {
           type: RESULT_TYPES.RANKING_TOO_LOW,
-          averageRanking: ranking.averageRanking
+          averageRanking: ranking.averageRanking,
+          aggregate: freeze(clone(aggregate))
         }
       }
 
       const newAggregate = set(aggregate, 'employee.promoted', true)
 
-      eventBus.publish(EVENT_TYPES.EMPLOYEE_PROMOTED, newAggregate.employee)
+      events.push({
+        type: EVENT_TYPES.EMPLOYEE_PROMOTED,
+        payload: newAggregate.employee
+      })
 
       return {
         type: RESULT_TYPES.OK,
