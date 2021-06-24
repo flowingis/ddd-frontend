@@ -2,12 +2,8 @@ import React, { useState, useEffect, useCallback } from 'react'
 import Container from '@material-ui/core/Container'
 import Typography from '@material-ui/core/Typography'
 import Box from '@material-ui/core/Box'
-import employeesRepository from './lib/api/employeesRepository'
-import reviewsRepository from './lib/api/reviewsRepository'
+import employeesService from './lib/services/employeesService'
 import EmpoyeesList from './components/EmpoyeesList'
-
-const MIN_RANKING_TO_PROMOTE = 7
-const MIN_NUMBER_OF_REVIEWS_TO_BE_PROMOTED = 4
 
 function AppContent ({ loading, employees, onPromoteClick }) {
   if (loading) {
@@ -22,7 +18,7 @@ export default function App () {
   const [employees, setEmployees] = useState([])
 
   useEffect(() => {
-    employeesRepository
+    employeesService
       .list()
       .then(data => {
         setEmployees(data)
@@ -31,36 +27,11 @@ export default function App () {
   }, [])
 
   const onPromoteClick = useCallback(async (toPromote) => {
-    const reviews = await reviewsRepository.listReceivedReviews(toPromote.id)
-
-    if (reviews.length < MIN_NUMBER_OF_REVIEWS_TO_BE_PROMOTED) {
-      window.alert(`${toPromote.name} receveid only ${reviews.length} peer reviews, they cannot be promoted`)
-      return
+    try {
+      await employeesService.promote(toPromote, employees, setEmployees)
+    } catch (e) {
+      window.alert(e.message)
     }
-
-    const averageRanking = reviews
-      .map(r => r.ranking)
-      .reduce((acc, ranking) => acc + ranking, 0) / reviews.length
-
-    if (averageRanking < MIN_RANKING_TO_PROMOTE) {
-      window.alert(`The ranking of ${toPromote.name} is too low (${averageRanking}) to be promoted`)
-      return
-    }
-
-    const newEmployees = employees.map(employee => {
-      if (employee.id === toPromote.id) {
-        employee.promoted = true
-      }
-      return employee
-    })
-    setEmployees(newEmployees)
-    employeesRepository
-      .promote(toPromote.id)
-      .catch(e => {
-        // Error handling
-        console.error(e)
-        setEmployees(employees)
-      })
   }, [employees])
 
   return (
